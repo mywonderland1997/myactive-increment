@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Increment MyActive Contract</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f5f5f5; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; font-size: 16px; }
+    #status { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h2>Increment MyActive Contract</h2>
+  <p>Press "Connect Wallet" then "Call increment()" to increase the contract counter.</p>
+
+  <div>Contract Address: <b id="caddr">0xbad4d0ea1fb09e9bb26d062c2a824409803010da</b></div>
+  <button id="connect">Connect Wallet</button>
+  <button id="increment" disabled>Call increment()</button>
+  <p id="status"></p>
+
+  <script>
+    const contractAddress = "0xbad4d0ea1fb09e9bb26d062c2a824409803010da";
+    const ABI = [
+      "function increment() public",
+      "function count() view returns (uint256)"
+    ];
+
+    let provider, signer, contract;
+
+    document.getElementById('connect').onclick = async () => {
+      if (!window.ethereum) {
+        alert("Please install MetaMask or any Web3 wallet!");
+        return;
+      }
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      contract = new ethers.Contract(contractAddress, ABI, signer);
+      document.getElementById('status').innerText = "Wallet connected.";
+      document.getElementById('increment').disabled = false;
+    };
+
+    document.getElementById('increment').onclick = async () => {
+      try {
+        document.getElementById('status').innerText = "Sending transaction...";
+        const tx = await contract.increment();
+        document.getElementById('status').innerText = `Transaction sent: ${tx.hash}, waiting for confirmation...`;
+        await tx.wait();
+        const c = await contract.count();
+        document.getElementById('status').innerText = `Confirmed! New count: ${c}`;
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').innerText = `Error: ${err.message || err}`;
+      }
+    };
+  </script>
+</body>
+</html>
